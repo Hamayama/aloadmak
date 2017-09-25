@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-25 v1.00
+;; 2017-9-26 v1.01
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -16,7 +16,7 @@
     aloadmak))
 (select-module aloadmak)
 
-;; gauche.test の内部手続きを使用
+;; gauche.test モジュールの内部の手続きを使用
 (define toplevel-closures
   (with-module gauche.test toplevel-closures))
 (define closure-grefs
@@ -78,10 +78,10 @@
     ;; autoload のコードを生成して返す
     `(autoload ,module
                ,@(delete-duplicates
-               ;; for Gauche v0.9.4 compatibility
-               ;; for Gauche v0.9.3.3 compatibility
-               ;(sort mod-syms)
-               ;(sort mod-syms string<? x->string)
-               (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
-               ))))
+                  ;; for Gauche v0.9.4 compatibility
+                  ;; for Gauche v0.9.3.3 compatibility
+                  ;(sort mod-syms)
+                  ;(sort mod-syms string<? x->string)
+                  (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
+                  ))))
 
