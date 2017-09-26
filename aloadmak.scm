@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-26 v1.10
+;; 2017-9-26 v1.11
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -20,58 +20,39 @@
     aloadmak))
 (select-module aloadmak)
 
-;; load 用のポートの取得
-(define find-load-file
-  ;; for Gauche v0.9.4 compatibility
-  ;; for Gauche v0.9.3.3 compatibility
-  (if (version<=? (gauche-version) "0.9.4")
-    (lambda (file paths suffixes :key (error-if-not-found #f)
-                  (allow-archive #f) (relative-dot-path #f))
-      ((with-module gauche.internal find-load-file)
-       file paths suffixes error-if-not-found relative-dot-path))
-    (with-module gauche.internal find-load-file)))
-(define (get-load-port file)
-  (if-let1 r (find-load-file file *load-path* *load-suffixes*
-                             :error-if-not-found #t
-                             :allow-archive #t)
-    (let* ((path (car r))
-           (remaining-paths (cadr r))
-           (hooked? (pair? (cddr r)))
-           (opener (if hooked? (caddr r) open-input-file))
-           (port (guard (e (else e)) (opener path))))
-      (if (not (input-port? port))
-        (raise port)
-        (open-coding-aware-port port)))))
-
-
 ;; autoload のコードを生成する
 ;;   module-or-file 対象のモジュールを表すシンボル、または、スクリプトファイル名
 ;;   use-module     対象の内部で使用するモジュールを表すシンボル
 (define (aloadmak module-or-file use-module)
 
-  ;; モジュールの取得とチェック
+  ;; モジュールの取得
   (define (get-module module)
-    (cond ((module? module) module)
+    (cond ((module? module)
+           module)
           ((symbol? module)
            (or (find-module module)
-               (error "no such module" module)))
+               (if (library-exists? module)
+                 (begin (eval `(use ,module) (interaction-environment))
+                        (find-module module))
+                 (error "no such module" module))))
           (else
            (error "module required, but got" module))))
 
   ;; ファイル名の取得
-  (define file
+  (define (get-file-name module-or-file)
     (cond
-     ((string? module-or-file)
-      module-or-file)
      ((module? module-or-file)
       (module-name->path (module-name module-or-file)))
      ((symbol? module-or-file)
       (module-name->path module-or-file))
+     ((string? module-or-file)
+      module-or-file)
      (else
       (error "module or filename required, but got" module-or-file))))
 
   ;; シンボルを検索して、autoload のコードを生成する
-  (let* ((use-mod      (get-module use-module))
+  (let* ((file         (get-file-name module-or-file))
+         (use-mod      (get-module use-module))
          (use-mod-syms (module-exports use-mod))
          (mod-syms     '()))
 
@@ -112,4 +93,30 @@
                   ;(sort mod-syms string<? x->string)
                   (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
                   ))))
+
+
+;; load 用のポートの取得
+;; (参考 : Gauche の src/libeval.scm の load および find-load-file )
+(define find-load-file
+  ;; for Gauche v0.9.4 compatibility
+  ;; for Gauche v0.9.3.3 compatibility
+  (if (version<=? (gauche-version) "0.9.4")
+    (lambda (file paths suffixes :key (error-if-not-found #f)
+                  (allow-archive #f) (relative-dot-path #f))
+      ((with-module gauche.internal find-load-file)
+       file paths suffixes error-if-not-found relative-dot-path))
+    (with-module gauche.internal find-load-file)))
+(define (get-load-port file)
+  (if-let1 r (find-load-file file *load-path* *load-suffixes*
+                             :error-if-not-found #t
+                             :allow-archive #t)
+    (let* ((path (car r))
+           (remaining-paths (cadr r))
+           (hooked? (pair? (cddr r)))
+           (opener (if hooked? (caddr r) open-input-file))
+           (port (guard (e (else e)) (opener path))))
+      (if (not (input-port? port))
+        (raise port)
+        (open-coding-aware-port port)))))
+
 
