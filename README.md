@@ -22,7 +22,8 @@
   (aloadmak 'gauche.vport 'gauche.uvector)
   ```
   実行結果として autoload のコードが表示されるので、  
-  それを use のコードと差し替えれば、autoload に変更できます。
+  それを use のコードと差し替えれば、autoload に変更できます。  
+  (ただし、注意事項 2. の内容に注意してください)
 
 - aloadmak 手続きの書式は以下の通りです。  
   `aloadmak module-or-file use-module`
@@ -45,7 +46,11 @@
    別途、動作確認を実施ください。  
    (上記使用例の gauche.vport の場合も、  
    get-output-uvector と open-output-uvector が循環参照のようになっており、  
-   手作業で除去が必要でした)
+   生成したコードから手作業で除去する必要がありました)
+
+3. むやみに use を autoload に変更すると、プログラムの保守性が悪くなります。  
+   ロード時間を測定して、必要な部分にのみ autoload を使用するようにしてください。  
+   (ロード時間は、`gosh -pload` で測定できます)
 
 
 ## 環境等
