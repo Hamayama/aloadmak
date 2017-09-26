@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-26 v1.11
+;; 2017-9-26 v1.12
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -27,16 +27,19 @@
 
   ;; モジュールの取得
   (define (get-module module)
-    (cond ((module? module)
-           module)
-          ((symbol? module)
-           (or (find-module module)
-               (if (library-exists? module)
-                 (begin (eval `(use ,module) (interaction-environment))
-                        (find-module module))
-                 (error "no such module" module))))
-          (else
-           (error "module required, but got" module))))
+    (cond
+     ((module? module)
+      module)
+     ((symbol? module)
+      (or (find-module module)
+          (if (library-exists? module)
+            (begin
+              (eval `(use ,module) (interaction-environment))
+              (find-module module))
+            #f)
+          (error "no such module" module)))
+     (else
+      (error "module required, but got" module))))
 
   ;; ファイル名の取得
   (define (get-file-name module-or-file)
@@ -85,14 +88,15 @@
             (loop (read)))))))
 
     ;; autoload のコードを生成して返す
-    `(autoload ,(module-name use-mod)
-               ,@(delete-duplicates
-                  ;; for Gauche v0.9.4 compatibility
-                  ;; for Gauche v0.9.3.3 compatibility
-                  ;(sort mod-syms)
-                  ;(sort mod-syms string<? x->string)
-                  (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
-                  ))))
+    `(autoload
+      ,(module-name use-mod)
+      ,@(delete-duplicates
+         ;; for Gauche v0.9.4 compatibility
+         ;; for Gauche v0.9.3.3 compatibility
+         ;(sort mod-syms)
+         ;(sort mod-syms string<? x->string)
+         (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
+         ))))
 
 
 ;; load 用のポートの取得
