@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-26 v1.02
+;; 2017-9-26 v1.03
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -25,16 +25,29 @@
   (with-module gauche.test dangling-gref?))
 
 ;; autoload のコードを生成する
-;;   module     対象モジュールを表すシンボル
-;;   use-module 対象モジュール内で使用するモジュールを表すシンボル
-(define (aloadmak module use-module)
-  ;; モジュールの取得(内部処理用)
+;;   module-or-file 対象のモジュールを表すシンボル、または、スクリプトファイル名
+;;   use-module     対象の内部で使用するモジュールを表すシンボル
+(define (aloadmak module-or-file use-module)
+
+  ;; スクリプトファイル名の場合は、無名モジュールにロードする
+  (define module
+    (cond
+     ((string? module-or-file)
+      (rlet1 m (make-module #f)
+        (eval `(define *program-name* ,module-or-file) m)
+        (eval `(define *argv* '()) m)
+        (load module-or-file :environment m)))
+     (else
+      module-or-file)))
+
+  ;; モジュールの取得とチェック(内部処理用)
   (define (get-module module)
-    (cond ((symbol? module)
+    (cond ((module? module) module)
+          ((symbol? module)
            (or (find-module module)
                (error "no such module" module)))
           (else
-           (error "symbol required, but got" module))))
+           (error "module required, but got" module))))
 
   ;; シンボルを検索して、autoload のコードを生成する
   (let* ((mod          (get-module module))
@@ -48,8 +61,8 @@
                              (push! mod-syms sym))))
     ;; 検索2 - 対象モジュールの export シンボルを検索 (rename対応)
     (when (pair? (module-exports mod))
-      (let ((m (make-module #f)))
-        (eval `(import ,module) m)
+      (let1 m (make-module #f)
+        (eval `(import ,(module-name mod)) m)
         (eval `(extend) m)
         (for-each (lambda (sym)
                     (if (memq sym use-mod-syms)
@@ -76,7 +89,7 @@
                    (closure-grefs closure))))
      (toplevel-closures mod))
     ;; autoload のコードを生成して返す
-    `(autoload ,use-module
+    `(autoload ,(module-name use-mod)
                ,@(delete-duplicates
                   ;; for Gauche v0.9.4 compatibility
                   ;; for Gauche v0.9.3.3 compatibility
