@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-26 v1.12
+;; 2017-9-27 v1.13
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -71,13 +71,13 @@
           (cond
            ((eof-object? s))
            ((pair? s)
-            ;; car 部 と cdr 部に分けて処理する
+            ;; car 部と cdr 部に分けて処理する
             (let loop2 ((s1 (car s)) (s2 (cdr s)))
-              ;; car 部 の処理
+              ;; car 部の処理
               (if (pair? s1)
                 (loop2 (car s1) (cdr s1))
                 (search s1))
-              ;; cdr 部 の処理
+              ;; cdr 部の処理
               (if (pair? s2)
                 (loop2 (car s2) (cdr s2))
                 (begin
