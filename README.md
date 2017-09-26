@@ -13,24 +13,26 @@
 
 
 ## 使い方
-- 例えば、gauche.vport で use している gauche.uvector を  
+- 例えば、moduleA で use している moduleB を  
   autoload に変更したい場合には、以下のように実行します。  
   ```
   (use aloadmak)
-  (aloadmak 'gauche.vport 'gauche.uvector)
+  (aloadmak 'moduleA 'moduleB)
   ```
   すると、実行結果として autoload のコードが表示されます。  
-  そして、それを gauche.vport 内の use のコードと差し替えれば、  
-  use を autoload に変更できます。  
+  それを moduleA 内の use のコードと差し替えれば、  
+  use を autoload に変更することができます。  
   (ただし、後述の注意事項 1. の内容に注意してください)
 
 - aloadmak 手続きの書式は以下の通りです。  
   `aloadmak module-or-file use-module`
   - 第1引数の module-or-file には、対象のモジュールを表すシンボル、または、  
-    スクリプトファイル名を指定します。
+    スクリプトファイル名を指定します。  
+    (指定したモジュールまたはスクリプトファイルは、ロード可能である必要があります)
 
   - 第2引数の use-module には、対象の内部で使用するモジュールを表す  
     シンボルを指定します。  
+    (指定したモジュールは、ロード可能である必要があります)
 
   - 戻り値は、生成した autoload のコードになります。
 
@@ -40,10 +42,7 @@
    別途、動作確認を実施ください。  
    (例えば、ローカル変数に同名のシンボルが使われていた場合でも、  
    autoload の対象と判定してしまいます)  
-   (逆に、シンボルを動的に生成していた場合には、判定もれが発生します)  
-   (また、上記使用例の gauche.vport の場合も、  
-   get-output-uvector と open-output-uvector が実際には循環参照のようになっており、  
-   生成したコードから手作業で除去する必要がありました)
+   (逆に、シンボルを動的に生成していた場合には、判定もれが発生します)
 
 2. むやみに use を autoload に変更すると、プログラムの保守性が悪くなります。  
    ロード時間を測定して、必要な部分にのみ autoload を使用するようにしてください。  
