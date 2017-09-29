@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-30 v1.16
+;; 2017-9-30 v1.17
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -14,7 +14,6 @@
 ;;   単純にシンボルを検索しているため、誤ったコードを生成することがあります。
 ;;
 (define-module aloadmak
-  (use gauche.test)
   (use gauche.version)
   (export
     aloadmak))
@@ -59,11 +58,6 @@
          (use-mod-syms (module-exports use-mod))
          (mod-syms     '()))
 
-    ;; シンボル1個の検索
-    (define (search sym)
-      (if (memq sym use-mod-syms)
-        (push! mod-syms sym)))
-
     ;; ファイルからS式を読み込み、再帰的に検索する
     (with-input-from-port (get-load-port file)
       (lambda ()
@@ -77,7 +71,8 @@
             (loop (vector->list s) nest))
            (else
             ;(display s) (display " ")
-            (search s)
+            (if (memq s use-mod-syms)
+              (push! mod-syms s))
             (unless nest
               ;(newline)
               (loop (read) #f)))))))
