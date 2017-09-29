@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-29 v1.14
+;; 2017-9-30 v1.15
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -67,25 +67,20 @@
     ;; ファイルからS式を読み込み、再帰的に検索する
     (with-input-from-port (get-load-port file)
       (lambda ()
-        (let loop ((s (read)))
-          (cond
-           ((eof-object? s))
-           ((pair? s)
-            ;; car 部と cdr 部に分けて処理する
-            (let loop2 ((s1 (car s)) (s2 (cdr s)))
-              ;; car 部の処理
-              (if (pair? s1)
-                (loop2 (car s1) (cdr s1))
-                (search s1))
-              ;; cdr 部の処理
-              (if (pair? s2)
-                (loop2 (car s2) (cdr s2))
-                (begin
-                  (search s2)
-                  (loop (read))))))
-           (else
-            (search s)
-            (loop (read)))))))
+        (let loop ((s (read)) (nest #f))
+          (unless (eof-object? s)
+            (cond
+             ((pair? s)
+              (loop (car s) #t)
+              (loop (cdr s) nest))
+             ((vector? s)
+              (loop (vector->list s) nest))
+             (else
+              ;(display s) (display " ")
+              (search s)
+              (unless nest
+                ;(newline)
+                (loop (read) #f))))))))
 
     ;; autoload のコードを生成して返す
     `(autoload
