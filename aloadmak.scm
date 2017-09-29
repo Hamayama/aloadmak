@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-27 v1.13
+;; 2017-9-29 v1.14
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -115,7 +115,7 @@
                              :error-if-not-found #t
                              :allow-archive #t)
     (let* ((path (car r))
-           (remaining-paths (cadr r))
+           ;(remaining-paths (cadr r))
            (hooked? (pair? (cddr r)))
            (opener (if hooked? (caddr r) open-input-file))
            (port (guard (e (else e)) (opener path))))
