@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-9-30 v1.17
+;; 2017-10-3 v1.18
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -89,18 +89,21 @@
          ))))
 
 
-;; load 用のポートの取得
+;; ロード用のポートの取得
 ;; (参考 : Gauche の src/libeval.scm の load および find-load-file )
-(define find-load-file
-  ;; for Gauche v0.9.4 compatibility
-  ;; for Gauche v0.9.3.3 compatibility
-  (if (version<=? (gauche-version) "0.9.4")
-    (lambda (file paths suffixes :key (error-if-not-found #f)
-                  (allow-archive #f) (relative-dot-path #f))
-      ((with-module gauche.internal find-load-file)
-       file paths suffixes error-if-not-found relative-dot-path))
-    (with-module gauche.internal find-load-file)))
 (define (get-load-port file)
+  ;; ロードファイルの検索
+  (define find-load-file
+    ;; for Gauche v0.9.4 compatibility
+    ;; for Gauche v0.9.3.3 compatibility
+    (if (version<=? (gauche-version) "0.9.4")
+      (lambda (file paths suffixes :key (error-if-not-found #f)
+                    (allow-archive #f) (relative-dot-path #f))
+        ((with-module gauche.internal find-load-file)
+         file paths suffixes error-if-not-found relative-dot-path))
+      (with-module gauche.internal find-load-file)))
+
+  ;; ロード用のポートの取得
   (if-let1 r (find-load-file file *load-path* *load-suffixes*
                              :error-if-not-found #t
                              :allow-archive #t)
@@ -110,7 +113,7 @@
            (opener (if hooked? (caddr r) open-input-file))
            (port (guard (e (else e)) (opener path))))
       (if (not (input-port? port))
-        (raise port)
+        (error "couldn't get input port, but got" port)
         (open-coding-aware-port port)))))
 
 
