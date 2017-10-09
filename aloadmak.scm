@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-10-3 v1.18
+;; 2017-10-9 v1.19
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -56,7 +56,7 @@
   (let* ((file         (get-file-name module-or-file))
          (use-mod      (get-module use-module))
          (use-mod-syms (module-exports use-mod))
-         (mod-syms     '()))
+         (aload-syms   '()))
 
     ;; ファイルからS式を読み込み、再帰的に検索する
     (with-input-from-port (get-load-port file)
@@ -72,7 +72,7 @@
            (else
             ;(display s) (display " ")
             (if (memq s use-mod-syms)
-              (push! mod-syms s))
+              (push! aload-syms s))
             (unless nest
               ;(newline)
               (loop (read) #f)))))))
@@ -83,9 +83,9 @@
       ,@(delete-duplicates
          ;; for Gauche v0.9.4 compatibility
          ;; for Gauche v0.9.3.3 compatibility
-         ;(sort mod-syms)
-         ;(sort mod-syms string<? x->string)
-         (sort mod-syms (lambda (a b) (string<? (x->string a) (x->string b))))
+         ;(sort aload-syms)
+         ;(sort aload-syms string<? x->string)
+         (sort aload-syms (lambda (a b) (string<? (x->string a) (x->string b))))
          ))))
 
 
@@ -93,7 +93,7 @@
 ;; (参考 : Gauche の src/libeval.scm の load および find-load-file )
 (define (get-load-port file)
   ;; ロードファイルの検索
-  (define find-load-file
+  (define %find-load-file
     ;; for Gauche v0.9.4 compatibility
     ;; for Gauche v0.9.3.3 compatibility
     (if (version<=? (gauche-version) "0.9.4")
@@ -104,9 +104,9 @@
       (with-module gauche.internal find-load-file)))
 
   ;; ロード用のポートの取得
-  (if-let1 r (find-load-file file *load-path* *load-suffixes*
-                             :error-if-not-found #t
-                             :allow-archive #t)
+  (if-let1 r (%find-load-file file *load-path* *load-suffixes*
+                              :error-if-not-found #t
+                              :allow-archive #t)
     (let* ((path (car r))
            ;(remaining-paths (cadr r))
            (hooked? (pair? (cddr r)))
