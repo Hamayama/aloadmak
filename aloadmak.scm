@@ -1,7 +1,7 @@
 ;; -*- coding: utf-8 -*-
 ;;
 ;; aloadmak.scm
-;; 2017-10-9 v1.19
+;; 2017-10-14 v1.20
 ;;
 ;; ＜内容＞
 ;;   Gauche で autoload のコードを生成するためのモジュールです。
@@ -23,7 +23,6 @@
 ;;   module-or-file 対象のモジュールを表すシンボル、または、スクリプトファイル名
 ;;   use-module     対象の内部で使用するモジュールを表すシンボル
 (define (aloadmak module-or-file use-module)
-
   ;; モジュールの取得
   (define (get-module module)
     (cond
